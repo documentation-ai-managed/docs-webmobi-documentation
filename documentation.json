@@ -1,0 +1,75 @@
+{
+  "name": "webMOBI Documentation",
+  "initialRoute": "introduction",
+  "primaryColor": "#066b98",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "icon": "book",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "icon": "rocket",
+            "pages": [
+              {
+                "title": "Introduction",
+                "path": "introduction",
+                "icon": "star"
+              }
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "icon": "lightbulb",
+            "pages": [
+              {
+                "title": "Authentication",
+                "path": "authentication",
+                "icon": "key"
+              },
+              {
+                "title": "Configuration",
+                "path": "configuration",
+                "icon": "settings"
+              }
+            ]
+          },
+          {
+            "group": "Advanced Features",
+            "icon": "zap",
+            "pages": [
+              {
+                "title": "Webhooks",
+                "path": "webhooks",
+                "icon": "webhook"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "icon": "code",
+        "groups": [
+          {
+            "group": "Endpoints",
+            "icon": "terminal",
+            "openapi": "openapi.yaml"
+          }
+        ]
+      },
+      {
+        "tab": "Changelog",
+        "icon": "clock",
+        "pages": [
+          {
+            "title": "Release History",
+            "path": "changelog",
+            "icon": "history"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,172 @@
+---
+title: Authentication
+description: Learn how to authenticate and secure access to webMOBI APIs and services
+---
+
+## Authentication Methods
+
+webMOBI supports multiple authentication methods to ensure secure access to your applications and data. Choose the method that best fits your use case and security requirements.
+
+<Tabs>
+  <Tab title="API Keys" icon="key">
+    Use API keys for server-to-server authentication. This method is ideal for backend services and automated processes.
+    
+    <Steps>
+      <Step title="Generate API Key" icon="plus">
+        Access your dashboard and navigate to API settings to generate a new key.
+        
+        <CodeGroup tabs="curl,Python">
+          ```bash
+curl -X POST https://api.webmobi.com/v1/keys \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"name":"My App Key","permissions":["read","write"]}'
+```
+          ```python
+import requests
+
+response = requests.post(
+    'https://api.webmobi.com/v1/keys',
+    headers={'Authorization': 'Bearer YOUR_TOKEN'},
+    json={'name': 'My App Key', 'permissions': ['read', 'write']}
+)
+print(response.json())
+```
+        </Step>
+      <Step title="Configure Environment" icon="settings">
+        Store your API key securely in environment variables or a key management system.
+        
+        ```bash
+export WEBMOBI_API_KEY="your_api_key_here"
+```
+      </Step>
+      <Step title="Make Authenticated Requests" icon="send">
+        Include the API key in your request headers for all API calls.
+        
+        ```javascript
+const response = await fetch('/api/events', {
+  headers: {
+    'X-API-Key': process.env.WEBMOBI_API_KEY,
+    'Content-Type': 'application/json'
+  }
+});
+const data = await response.json();
+```
+      </Step>
+    </Steps>
+    
+    <Callout kind="alert">Keep your API keys secure and never expose them in client-side code.</Callout>
+  </Tab>
+  <Tab title="OAuth 2.0" icon="lock">
+    OAuth 2.0 provides secure delegated access for user-facing applications.
+    
+    <Expandable title="OAuth Flow Types" default-open="false">
+      webMOBI supports Authorization Code, Implicit, and Client Credentials flows.
+      
+      | Flow Type | Use Case | Security Level |
+      |-----------|----------|----------------|
+      | Authorization Code | Web applications | High |
+      | Implicit | Single-page apps | Medium |
+      | Client Credentials | Machine-to-machine | High |
+    </Expandable>
+    
+    <CodeGroup tabs="Node.js,Python">
+      ```javascript
+const oauth2 = require('oauth2-server');
+
+const server = new oauth2({
+  model: webmobiOAuthModel,
+  allowBearerTokensInQueryString: true
+});
+
+app.post('/oauth/token', server.token());
+```
+      ```python
+from oauthlib.oauth2 import BackendApplicationClient
+from requests_oauthlib import OAuth2Session
+
+client = BackendApplicationClient(client_id=CLIENT_ID)
+oauth = OAuth2Session(client=client)
+token = oauth.fetch_token(
+    token_url='https://api.webmobi.com/oauth/token',
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET
+)
+```
+    </CodeGroup>
+  </Tab>
+</Tabs>
+
+## Token Management
+
+Proper token lifecycle management is crucial for maintaining security and preventing unauthorized access.
+
+<ExpandableGroup>
+  <Expandable title="Token Expiration" default-open="true">
+    API tokens have configurable expiration times. Monitor token validity and implement automatic refresh mechanisms.
+    
+    <Callout kind="info">Access tokens expire after 1 hour, refresh tokens after 30 days.</Callout>
+    
+    ```javascript
+function refreshToken() {
+  return fetch('/oauth/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: localStorage.getItem('refresh_token'),
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    localStorage.setItem('access_token', data.access_token);
+    return data.access_token;
+  });
+}
+```
+  </Expandable>
+  <Expandable title="Token Revocation" default-open="false">
+    Revoke tokens immediately when users log out or when security incidents occur.
+    
+    ```bash
+curl -X POST https://api.webmobi.com/oauth/revoke \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "token=YOUR_ACCESS_TOKEN&client_id=YOUR_CLIENT_ID"
+```
+  </Expandable>
+</ExpandableGroup>
+
+## Security Best Practices
+
+Follow these guidelines to maintain a secure authentication system.
+
+<Steps>
+  <Step title="Use HTTPS" icon="shield">
+    Always use HTTPS for all authentication requests to prevent man-in-the-middle attacks.
+  </Step>
+  <Step title="Implement Rate Limiting" icon="clock">
+    Protect against brute force attacks by implementing rate limiting on authentication endpoints.
+  </Step>
+  <Step title="Monitor Access" icon="eye">
+    Log and monitor authentication attempts for suspicious activity.
+  </Step>
+  <Step title="Regular Key Rotation" icon="refresh-cw">
+    Rotate API keys and tokens regularly to minimize the impact of compromised credentials.
+  </Step>
+</Steps>
+
+<Callout kind="danger">Never store sensitive credentials in version control systems or client-side code.</Callout>
+
+## Troubleshooting
+
+Common authentication issues and their solutions.
+
+| Issue | Symptom | Solution |
+|-------|---------|----------|
+| Invalid Token | `401 Unauthorized` | Check token expiration and refresh if needed |
+| Insufficient Permissions | `403 Forbidden` | Verify API key permissions in your dashboard |
+| Rate Limit Exceeded | `429 Too Many Requests` | Implement exponential backoff retry logic |
+| CORS Errors | Browser blocks request | Configure allowed origins in API settings |
+
+For additional support, contact our security team at security@webmobi.com.

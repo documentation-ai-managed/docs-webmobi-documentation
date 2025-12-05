@@ -1,0 +1,269 @@
+---
+title: Configuration
+description: Configure your webMOBI applications and services for optimal performance
+---
+
+## Environment Setup
+
+Proper configuration is essential for deploying webMOBI applications successfully. We'll guide you through setting up your development and production environments.
+
+<Columns cols={2}>
+  <Card title="Development" icon="code" href="#development-setup">
+    Local development environment configuration.
+  </Card>
+  <Card title="Production" icon="server" href="#production-setup">
+    Production deployment and scaling configuration.
+  </Card>
+</Columns>
+
+## Development Setup
+
+<Tabs>
+  <Tab title="Local Installation" icon="download">
+    Set up webMOBI development environment on your local machine.
+    
+    <Steps>
+      <Step title="Install Dependencies" icon="package">
+        Install Node.js, Python, and required system packages.
+        
+        <CodeGroup tabs="macOS,Linux,Ubuntu">
+          ```bash
+brew install node python3 postgresql
+```
+          ```bash
+sudo apt-get update
+sudo apt-get install nodejs python3 postgresql postgresql-contrib
+```
+          ```bash
+sudo apt update
+sudo apt install nodejs npm python3 postgresql postgresql-contrib
+```
+        </CodeGroup>
+      </Step>
+      <Step title="Clone Repository" icon="git-branch">
+        Download the webMOBI project files.
+        
+        ```bash
+git clone https://github.com/webmobi/platform.git
+cd platform
+npm install
+```
+      </Step>
+      <Step title="Configure Database" icon="database">
+        Set up PostgreSQL database for local development.
+        
+        ```bash
+createdb webmobi_dev
+psql -d webmobi_dev -f database/schema.sql
+```
+      </Step>
+      <Step title="Environment Variables" icon="settings">
+        Create `.env` file with your configuration.
+        
+        ```bash
+cp .env.example .env
+# Edit .env with your settings
+```
+      </Step>
+    </Steps>
+    
+    <Callout kind="tip">Use Docker for isolated development environments.</Callout>
+  </Tab>
+  <Tab title="Cloud Development" icon="cloud">
+    Set up development environment in the cloud.
+    
+    <Expandable title="Supported Cloud Providers" default-open="false">
+      webMOBI supports development environments on AWS, Google Cloud, and Azure.
+      
+      | Provider | Setup Time | Cost |
+      |----------|------------|------|
+      | AWS | 15 minutes | Medium |
+      | Google Cloud | 10 minutes | Low |
+      | Azure | 20 minutes | Medium |
+    </Expandable>
+    
+    ```javascript
+const cloudConfig = {
+  provider: 'aws',
+  region: 'us-east-1',
+  instanceType: 't3.medium',
+  environment: {
+    NODE_ENV: 'development',
+    DATABASE_URL: process.env.DATABASE_URL,
+    API_KEY: process.env.API_KEY
+  }
+};
+
+webmobi.deploy(cloudConfig);
+```
+  </Tab>
+</Tabs>
+
+## Configuration Files
+
+webMOBI uses configuration files to manage application settings across different environments.
+
+<ExpandableGroup>
+  <Expandable title="Application Config" default-open="true">
+    Main application configuration file structure.
+    
+    ```javascript
+// config/app.js
+export default {
+  name: 'webMOBI App',
+  version: '1.0.0',
+  environment: process.env.NODE_ENV || 'development',
+  
+  api: {
+    baseUrl: process.env.API_BASE_URL || 'https://api.webmobi.com',
+    timeout: 30000,
+    retries: 3
+  },
+  
+  database: {
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 5432,
+    name: process.env.DB_NAME || 'webmobi',
+    ssl: process.env.NODE_ENV === 'production'
+  },
+  
+  security: {
+    jwtSecret: process.env.JWT_SECRET,
+    bcryptRounds: 12,
+    corsOrigins: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000']
+  },
+  
+  features: {
+    aiEnabled: process.env.AI_ENABLED === 'true',
+    webhooksEnabled: process.env.WEBHOOKS_ENABLED === 'true',
+    analyticsEnabled: true
+  }
+};
+```
+  </Expandable>
+  <Expandable title="Environment Variables" default-open="false">
+    Required and optional environment variables.
+    
+    | Variable | Required | Description |
+    |----------|----------|-------------|
+    | `NODE_ENV` | Yes | Environment (`development`, `production`) |
+    | `API_BASE_URL` | Yes | Base URL for API calls |
+    | `DATABASE_URL` | Yes | Database connection string |
+    | `JWT_SECRET` | Yes | Secret key for JWT tokens |
+    | `AI_ENABLED` | No | Enable AI features (`true`/`false`) |
+    | `WEBHOOKS_ENABLED` | No | Enable webhook functionality |
+    | `CORS_ORIGINS` | No | Comma-separated allowed origins |
+  </Expandable>
+</ExpandableGroup>
+
+## Production Deployment
+
+<Steps>
+  <Step title="Build Application" icon="hammer">
+    Create production-ready build artifacts.
+    
+    ```bash
+npm run build
+npm run test
+npm run lint
+```
+  </Step>
+  <Step title="Containerize" icon="box">
+    Package application in Docker container.
+    
+    ```dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY dist ./dist
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+  </Step>
+  <Step title="Deploy to Cloud" icon="cloud">
+    Deploy containerized application to cloud platform.
+    
+    <CodeGroup tabs="AWS,GCP">
+      ```bash
+aws ecs update-service \
+  --cluster webmobi-cluster \
+  --service webmobi-service \
+  --force-new-deployment
+```
+      ```bash
+gcloud run deploy webmobi-app \
+  --source . \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated
+```
+    </CodeGroup>
+  </Step>
+  <Step title="Configure Load Balancer" icon="network">
+    Set up load balancing and SSL termination.
+  </Step>
+  <Step title="Monitor Performance" icon="bar-chart">
+    Implement monitoring and alerting.
+  </Step>
+</Steps>
+
+<Callout kind="info">Use environment-specific configuration files to manage different deployment settings.</Callout>
+
+## Scaling Configuration
+
+Configure your applications to handle increased load and traffic.
+
+<Tabs>
+  <Tab title="Horizontal Scaling" icon="arrows-right-left">
+    Scale by adding more instances of your application.
+    
+    ```yaml
+# docker-compose.yml
+version: '3.8'
+services:
+  web:
+    image: webmobi/app:latest
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    ports:
+      - "3000:3000"
+```
+  </Tab>
+  <Tab title="Vertical Scaling" icon="arrow-up">
+    Scale by increasing resources for existing instances.
+    
+    ```terraform
+resource "aws_instance" "webmobi_app" {
+  ami           = "ami-12345"
+  instance_type = "t3.large"  # Increased from t3.medium
+  
+  tags = {
+    Name = "webMOBI App"
+    Environment = "production"
+  }
+}
+```
+  </Tab>
+</Tabs>
+
+<Expandable title="Auto-scaling Policies" default-open="false">
+  Configure automatic scaling based on metrics.
+  
+  | Metric | Threshold | Action |
+  |--------|-----------|--------|
+  | CPU Usage | > 70% | Scale up |
+  | Memory Usage | > 80% | Scale up |
+  | Request Latency | > 500ms | Scale up |
+  | CPU Usage | < 30% | Scale down |
+  | Memory Usage | < 40% | Scale down |
+</Expandable>
+
+<Callout kind="success">Monitor your application metrics regularly to optimize configuration settings.</Callout>
